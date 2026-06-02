@@ -1,0 +1,2 @@
+0 9 * * * /opt/host-monitor/.venv/bin/python -m host_monitor daily --config /etc/host-monitor/config.toml >> /var/log/host-monitor/cron.log 2>&1
+

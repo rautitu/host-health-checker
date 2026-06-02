@@ -1,0 +1,9 @@
+[Unit]
+Description=Host monitor daily health snapshot
+
+[Service]
+Type=oneshot
+Environment=HOST_MONITOR_DISCORD_WEBHOOK=
+WorkingDirectory=/opt/host-monitor
+ExecStart=/opt/host-monitor/.venv/bin/python -m host_monitor daily --config /etc/host-monitor/config.toml
+
