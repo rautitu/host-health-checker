@@ -24,6 +24,8 @@ dev = [
 [project.scripts]
 host-monitor = "host_monitor.__main__:main"
 
+[tool.hatch.build.targets.wheel]
+packages = ["host_monitor"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-
