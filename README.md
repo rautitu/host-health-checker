@@ -24,6 +24,52 @@ python -m pip install -e '.[dev]'
 
 ## Deploy On A Host
 
+The easiest path is the install script:
+
+```bash
+git clone https://github.com/tonnomolt/host-health-checker.git
+cd host-health-checker
+sudo deploy/install.sh --install-apt-deps --install-cron --discord-webhook-url 'https://discord.com/api/webhooks/...'
+```
+
+The script:
+
+- copies the app to `/opt/host-monitor`
+- creates `/opt/host-monitor/.venv`
+- installs the Python package into that venv
+- creates `/etc/host-monitor/config.toml` if it does not already exist
+- writes `/etc/host-monitor/env` for the Discord webhook
+- creates `/var/lib/host-monitor` and `/var/log/host-monitor/snapshots`
+- optionally installs `/etc/cron.d/host-monitor`
+
+It does not overwrite an existing `config.toml`.
+
+After install, test manually:
+
+```bash
+sudo /opt/host-monitor/run-daily.sh
+```
+
+Edit config here:
+
+```bash
+sudoedit /etc/host-monitor/config.toml
+```
+
+Edit the webhook env here:
+
+```bash
+sudoedit /etc/host-monitor/env
+```
+
+For all options:
+
+```bash
+deploy/install.sh --help
+```
+
+### Manual Deploy
+
 These commands assume a Debian/Ubuntu-style host. Other Linux distributions work too, but package names may differ.
 
 1. Install Python venv support:
@@ -105,7 +151,13 @@ python -m host_monitor daily --config /etc/host-monitor/config.toml
 
 ## Cron
 
-Install with `crontab -e`:
+The install script can create `/etc/cron.d/host-monitor`:
+
+```bash
+sudo deploy/install.sh --install-cron
+```
+
+For a manual user crontab, run `crontab -e`:
 
 ```cron
 HOST_MONITOR_DISCORD_WEBHOOK=https://discord.com/api/webhooks/...
@@ -142,3 +194,5 @@ Copy `config.example.toml` and adjust paths and thresholds. Production-ish defau
 - cron log: `/var/log/host-monitor/cron.log`
 
 For local development, `config.example.toml` stores state and snapshots under `./var/`.
+
+Real local config files named `config.toml` are ignored by git. Keep secrets such as Discord webhook URLs in environment variables or `/etc/host-monitor/env`, not in `config.example.toml`.
