@@ -1,0 +1,27 @@
+[host]
+cpu_sample_seconds = 2
+core_cpu_percent_warn = 95
+core_cpu_percent_critical = 99
+mem_used_percent_warn = 90
+swap_used_percent_warn = 25
+disk_used_percent_warn = 85
+inode_used_percent_warn = 85
+load_per_cpu_warn = 1.5
+process_limit = 5
+disk_mounts = ["/"]
+
+[docker]
+enabled = true
+container_cpu_percent_warn = 150
+container_mem_percent_warn = 80
+restart_count_increase_warn = 1
+require_healthy = true
+
+[alerting]
+discord_webhook_url_env = "HOST_MONITOR_DISCORD_WEBHOOK"
+include_snapshot_path = true
+
+[storage]
+state_path = "./var/state.json"
+snapshot_dir = "./var/snapshots"
+

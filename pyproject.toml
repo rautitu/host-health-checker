@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "host-health-checker"
+version = "0.1.0"
+description = "Small cron-friendly Linux host health snapshot reporter"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [
+  { name = "Tuomas Rautiola" }
+]
+dependencies = [
+  "psutil>=5.9.8"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2"
+]
+
+[project.scripts]
+host-monitor = "host_monitor.__main__:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
