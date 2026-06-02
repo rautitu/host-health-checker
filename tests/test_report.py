@@ -1,6 +1,6 @@
 from host_monitor.config import Config
 from host_monitor.models import Finding, Snapshot
-from host_monitor.report import render_discord_report
+from host_monitor.report import post_discord_report, render_discord_report
 
 
 def test_report_renders_findings_and_snapshot_path():
@@ -25,3 +25,27 @@ def test_report_renders_findings_and_snapshot_path():
     assert "Single CPU core is saturated" in report
     assert "./var/snapshots/example.json" in report
 
+
+def test_post_discord_report_sets_user_agent(monkeypatch):
+    captured = {}
+
+    class FakeResponse:
+        status = 204
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            return False
+
+    def fake_urlopen(request, timeout):
+        captured["request"] = request
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setattr("host_monitor.report.urllib.request.urlopen", fake_urlopen)
+
+    post_discord_report("hello", "https://discord.com/api/webhooks/example/token")
+
+    assert captured["timeout"] == 20
+    assert captured["request"].headers["User-agent"] == "host-health-checker/0.1"

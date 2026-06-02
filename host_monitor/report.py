@@ -57,7 +57,10 @@ def post_discord_report(content: str, webhook_url: str) -> None:
     request = urllib.request.Request(
         webhook_url,
         data=payload,
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "User-Agent": "host-health-checker/0.1",
+        },
         method="POST",
     )
     with urllib.request.urlopen(request, timeout=20) as response:
