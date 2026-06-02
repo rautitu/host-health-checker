@@ -73,7 +73,11 @@ def _render_process_rows(rows: list[dict[str, object]]) -> list[str]:
         return ["- unavailable"]
     rendered = []
     for row in rows[:5]:
-        rendered.append(f"- `{row['pid']}` `{row['cpu_percent']}% CPU` `{row['memory_percent']}% MEM` {row['name']}")
+        command = row.get("cmdline") or row.get("name") or "unknown"
+        rendered.append(
+            f"- `{row['pid']}` `{row['cpu_percent']}% CPU` `{row['memory_percent']}% MEM` "
+            f"`{row.get('username') or 'unknown'}` {row.get('name') or 'unknown'} - {command}"
+        )
     return rendered
 
 
