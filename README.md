@@ -22,6 +22,72 @@ python -m venv .venv
 python -m pip install -e '.[dev]'
 ```
 
+## Deploy On A Host
+
+These commands assume a Debian/Ubuntu-style host. Other Linux distributions work too, but package names may differ.
+
+1. Install Python venv support:
+
+```bash
+sudo apt update
+sudo apt install python3 python3-venv
+```
+
+2. Put the project under `/opt/host-monitor`:
+
+```bash
+sudo mkdir -p /opt/host-monitor
+sudo chown "$USER":"$USER" /opt/host-monitor
+git clone https://github.com/tonnomolt/host-health-checker.git /opt/host-monitor
+cd /opt/host-monitor
+```
+
+If you are deploying from an already cloned checkout, copy or pull the code into `/opt/host-monitor` instead.
+
+3. Create the virtual environment and install the package:
+
+```bash
+python3 -m venv /opt/host-monitor/.venv
+/opt/host-monitor/.venv/bin/python -m pip install --upgrade pip
+/opt/host-monitor/.venv/bin/python -m pip install /opt/host-monitor
+```
+
+4. Create config, state, and log directories:
+
+```bash
+sudo mkdir -p /etc/host-monitor /var/lib/host-monitor /var/log/host-monitor/snapshots
+sudo cp /opt/host-monitor/config.example.toml /etc/host-monitor/config.toml
+sudo chown -R "$USER":"$USER" /var/lib/host-monitor /var/log/host-monitor
+```
+
+5. Edit `/etc/host-monitor/config.toml`.
+
+For production paths, set:
+
+```toml
+[storage]
+state_path = "/var/lib/host-monitor/state.json"
+snapshot_dir = "/var/log/host-monitor/snapshots"
+```
+
+6. Configure the Discord webhook environment variable:
+
+```bash
+export HOST_MONITOR_DISCORD_WEBHOOK='https://discord.com/api/webhooks/...'
+```
+
+For cron, put that export in the cron command or in a small wrapper script. For systemd, set it in `deploy/host-monitor.service` or an EnvironmentFile.
+
+7. Test before scheduling:
+
+```bash
+/opt/host-monitor/.venv/bin/python -m host_monitor config-test --config /etc/host-monitor/config.toml
+/opt/host-monitor/.venv/bin/python -m host_monitor snapshot --config /etc/host-monitor/config.toml --json
+/opt/host-monitor/.venv/bin/python -m host_monitor daily --config /etc/host-monitor/config.toml
+```
+
+If `HOST_MONITOR_DISCORD_WEBHOOK` is not set, `daily` prints the Discord report to stdout instead of sending it.
+
 ## Commands
 
 ```bash
@@ -39,13 +105,32 @@ python -m host_monitor daily --config /etc/host-monitor/config.toml
 
 ## Cron
 
-Example:
+Install with `crontab -e`:
 
 ```cron
+HOST_MONITOR_DISCORD_WEBHOOK=https://discord.com/api/webhooks/...
 0 9 * * * /opt/host-monitor/.venv/bin/python -m host_monitor daily --config /etc/host-monitor/config.toml >> /var/log/host-monitor/cron.log 2>&1
 ```
 
 See `deploy/` for cron and optional systemd timer examples.
+
+## Optional Systemd Timer
+
+Copy the example units, edit the webhook environment value, then enable the timer:
+
+```bash
+sudo cp deploy/host-monitor.service deploy/host-monitor.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now host-monitor.timer
+sudo systemctl list-timers host-monitor.timer
+```
+
+Run once manually:
+
+```bash
+sudo systemctl start host-monitor.service
+sudo journalctl -u host-monitor.service -n 100 --no-pager
+```
 
 ## Config
 
