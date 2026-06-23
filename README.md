@@ -113,9 +113,10 @@ subagent_prompt_timeout_hours = 6
 subagent_prompt_default_model = "default"
 subagent_prompt_models = ["default", "openai/gpt-5.5"]
 subagent_prompt_min_level = "warning"
+subagent_prompt_interactive_components = false
 ```
 
-Important: the incoming Discord webhook can post this prompt, but it cannot handle button clicks by itself. To actually start an OpenClaw subagent from `Kyllä`, wire the component custom ids to a Discord app interaction endpoint or an OpenClaw receiver. The custom ids are:
+By default this posts a plain text prompt without buttons. Important: a normal incoming Discord webhook cannot send interactive buttons or selects. To actually start an OpenClaw subagent from `Kyllä`, wire a Discord app interaction endpoint or an OpenClaw receiver, use an application-owned webhook, and then set `subagent_prompt_interactive_components = true`. The custom ids are:
 
 - `host-monitor:subagent:model:<request-id>`
 - `host-monitor:subagent:approve:<request-id>`

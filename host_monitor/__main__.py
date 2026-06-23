@@ -65,6 +65,7 @@ def config_test(config) -> dict[str, object]:
         "subagent_prompt_timeout_hours": config.alerting.subagent_prompt_timeout_hours,
         "subagent_prompt_default_model": config.alerting.subagent_prompt_default_model,
         "subagent_prompt_models": config.alerting.subagent_prompt_models,
+        "subagent_prompt_interactive_components": config.alerting.subagent_prompt_interactive_components,
         "disk_mounts": config.host.disk_mounts,
     }
 

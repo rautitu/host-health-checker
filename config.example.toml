@@ -25,6 +25,7 @@ subagent_prompt_timeout_hours = 6
 subagent_prompt_default_model = "default"
 subagent_prompt_models = ["default"]
 subagent_prompt_min_level = "warning"
+subagent_prompt_interactive_components = false
 
 [storage]
 state_path = "./var/state.json"
