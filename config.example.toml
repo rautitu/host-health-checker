@@ -20,8 +20,12 @@ require_healthy = true
 [alerting]
 discord_webhook_url_env = "HOST_MONITOR_DISCORD_WEBHOOK"
 include_snapshot_path = true
+subagent_prompt_enabled = false
+subagent_prompt_timeout_hours = 6
+subagent_prompt_default_model = "default"
+subagent_prompt_models = ["default"]
+subagent_prompt_min_level = "warning"
 
 [storage]
 state_path = "./var/state.json"
 snapshot_dir = "./var/snapshots"
-

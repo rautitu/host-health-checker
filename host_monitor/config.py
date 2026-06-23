@@ -34,6 +34,11 @@ class DockerConfig:
 class AlertingConfig:
     discord_webhook_url_env: str = "HOST_MONITOR_DISCORD_WEBHOOK"
     include_snapshot_path: bool = True
+    subagent_prompt_enabled: bool = False
+    subagent_prompt_timeout_hours: int = 6
+    subagent_prompt_default_model: str = "default"
+    subagent_prompt_models: list[str] = field(default_factory=lambda: ["default"])
+    subagent_prompt_min_level: str = "warning"
 
     @property
     def discord_webhook_url(self) -> str | None:
@@ -79,4 +84,3 @@ def _storage_from_dict(data: dict[str, Any]) -> StorageConfig:
         state_path=Path(data.get("state_path", StorageConfig.state_path)),
         snapshot_dir=Path(data.get("snapshot_dir", StorageConfig.snapshot_dir)),
     )
-

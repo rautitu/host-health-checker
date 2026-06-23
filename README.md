@@ -95,6 +95,34 @@ export HOST_MONITOR_DISCORD_WEBHOOK='https://discord.com/api/webhooks/...'
 python -m host_monitor daily --config /etc/host-monitor/config.toml
 ```
 
+### Optional Subagent Approval Prompt
+
+The monitor can post a second Discord message when findings cross configured alert levels. The message contains Discord components for:
+
+- model selection, defaulting to `default`
+- `Kyllä` approval
+- `Ei` decline
+- a request id and 6 hour expiry metadata
+
+Enable it in config:
+
+```toml
+[alerting]
+subagent_prompt_enabled = true
+subagent_prompt_timeout_hours = 6
+subagent_prompt_default_model = "default"
+subagent_prompt_models = ["default", "openai/gpt-5.5"]
+subagent_prompt_min_level = "warning"
+```
+
+Important: the incoming Discord webhook can post this prompt, but it cannot handle button clicks by itself. To actually start an OpenClaw subagent from `Kyllä`, wire the component custom ids to a Discord app interaction endpoint or an OpenClaw receiver. The custom ids are:
+
+- `host-monitor:subagent:model:<request-id>`
+- `host-monitor:subagent:approve:<request-id>`
+- `host-monitor:subagent:decline:<request-id>`
+
+The receiver should reject approvals after `subagent_prompt_timeout_hours` and invoke OpenClaw with the selected model and the saved snapshot path.
+
 ## Cron
 
 The install script can create `/etc/cron.d/host-monitor`:
