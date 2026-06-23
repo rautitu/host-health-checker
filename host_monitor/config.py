@@ -39,6 +39,7 @@ class AlertingConfig:
     subagent_prompt_default_model: str = "default"
     subagent_prompt_models: list[str] = field(default_factory=lambda: ["default"])
     subagent_prompt_min_level: str = "warning"
+    subagent_prompt_interactive_components: bool = False
 
     @property
     def discord_webhook_url(self) -> str | None:

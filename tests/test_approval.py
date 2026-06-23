@@ -21,6 +21,7 @@ def test_subagent_prompt_payload_contains_model_select_and_buttons():
     config = Config(
         alerting=AlertingConfig(
             subagent_prompt_enabled=True,
+            subagent_prompt_interactive_components=True,
             subagent_prompt_default_model="default",
             subagent_prompt_models=["default", "openai/gpt-5.5"],
         )
@@ -43,6 +44,15 @@ def test_subagent_prompt_payload_contains_model_select_and_buttons():
     assert ":approve:" in buttons[0]["custom_id"]
     assert buttons[1]["label"] == "Ei"
     assert ":decline:" in buttons[1]["custom_id"]
+
+
+def test_subagent_prompt_uses_plain_message_by_default():
+    snapshot = _snapshot([Finding("critical", "Single CPU core is saturated")])
+
+    payload = render_subagent_prompt(snapshot, Config())
+
+    assert "OpenClaw receiver is not wired yet" in payload["content"]
+    assert "components" not in payload
 
 
 def _snapshot(findings):

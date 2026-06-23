@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -36,7 +37,7 @@ def render_subagent_prompt(snapshot: Snapshot, config: Config) -> dict[str, obje
         [
             f"**Subagent analysis requested?** `{snapshot.hostname}`",
             f"Findings: `{len(snapshot.findings)}` | expires: `{expires_at.isoformat(timespec='minutes')}`",
-            "Choose a model and approve within the timeout if you want OpenClaw to investigate this snapshot.",
+            _prompt_instruction(config),
             "",
             "**Findings**",
             *[f"- `{finding.level}` {finding.message}" for finding in snapshot.findings[:8]],
@@ -46,9 +47,13 @@ def render_subagent_prompt(snapshot: Snapshot, config: Config) -> dict[str, obje
         ]
     )[:1900]
 
-    return {
+    payload: dict[str, object] = {
         "content": content,
-        "components": [
+        "allowed_mentions": {"parse": []},
+    }
+
+    if config.alerting.subagent_prompt_interactive_components:
+        payload["components"] = [
             {
                 "type": 1,
                 "components": [
@@ -79,14 +84,14 @@ def render_subagent_prompt(snapshot: Snapshot, config: Config) -> dict[str, obje
                     },
                 ],
             },
-        ],
-        "allowed_mentions": {"parse": []},
-    }
+        ]
+
+    return payload
 
 
 def post_subagent_prompt(snapshot: Snapshot, config: Config, webhook_url: str) -> None:
     payload = json.dumps(render_subagent_prompt(snapshot, config)).encode("utf-8")
-    url = _with_components(webhook_url)
+    url = _with_components(webhook_url) if config.alerting.subagent_prompt_interactive_components else webhook_url
     request = urllib.request.Request(
         url,
         data=payload,
@@ -96,9 +101,23 @@ def post_subagent_prompt(snapshot: Snapshot, config: Config, webhook_url: str) -
         },
         method="POST",
     )
-    with urllib.request.urlopen(request, timeout=20) as response:
-        if response.status >= 300:
-            raise RuntimeError(f"Discord subagent prompt failed with HTTP {response.status}")
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            if response.status >= 300:
+                raise RuntimeError(f"Discord subagent prompt failed with HTTP {response.status}")
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")[:500]
+        detail = f": {body}" if body else ""
+        raise RuntimeError(f"Discord subagent prompt failed with HTTP {exc.code}{detail}") from exc
+
+
+def _prompt_instruction(config: Config) -> str:
+    if config.alerting.subagent_prompt_interactive_components:
+        return "Choose a model and approve within the timeout if you want OpenClaw to investigate this snapshot."
+    return (
+        "OpenClaw receiver is not wired yet, so this is a notification only. "
+        "Use the request id and snapshot path if you want to trigger analysis manually."
+    )
 
 
 def _model_options(models: list[str], default_model: str) -> list[dict[str, object]]:
