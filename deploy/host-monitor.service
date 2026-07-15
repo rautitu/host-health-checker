@@ -4,6 +4,8 @@ Description=Host monitor daily health snapshot
 [Service]
 Type=oneshot
 Environment=HOST_MONITOR_DISCORD_WEBHOOK=
+Environment=HOST_MONITOR_OPENCLAW_HOOK_URL=
+Environment=HOST_MONITOR_OPENCLAW_HOOK_TOKEN=
+Environment=HOST_MONITOR_OPENCLAW_DISCORD_CHANNEL=
 WorkingDirectory=/opt/host-monitor
 ExecStart=/opt/host-monitor/.venv/bin/python -m host_monitor daily --config /etc/host-monitor/config.toml
-

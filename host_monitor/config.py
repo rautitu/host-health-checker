@@ -34,16 +34,26 @@ class DockerConfig:
 class AlertingConfig:
     discord_webhook_url_env: str = "HOST_MONITOR_DISCORD_WEBHOOK"
     include_snapshot_path: bool = True
-    subagent_prompt_enabled: bool = False
-    subagent_prompt_timeout_hours: int = 6
-    subagent_prompt_default_model: str = "default"
-    subagent_prompt_models: list[str] = field(default_factory=lambda: ["default"])
-    subagent_prompt_min_level: str = "warning"
-    subagent_prompt_interactive_components: bool = False
+    openclaw_analysis_hook_enabled: bool = False
+    openclaw_hook_url_env: str = "HOST_MONITOR_OPENCLAW_HOOK_URL"
+    openclaw_hook_token_env: str = "HOST_MONITOR_OPENCLAW_HOOK_TOKEN"
+    openclaw_discord_channel_env: str = "HOST_MONITOR_OPENCLAW_DISCORD_CHANNEL"
 
     @property
     def discord_webhook_url(self) -> str | None:
         return os.environ.get(self.discord_webhook_url_env)
+
+    @property
+    def openclaw_hook_url(self) -> str | None:
+        return os.environ.get(self.openclaw_hook_url_env)
+
+    @property
+    def openclaw_hook_token(self) -> str | None:
+        return os.environ.get(self.openclaw_hook_token_env)
+
+    @property
+    def openclaw_discord_channel(self) -> str | None:
+        return os.environ.get(self.openclaw_discord_channel_env)
 
 
 @dataclass(frozen=True)
