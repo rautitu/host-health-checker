@@ -31,8 +31,10 @@ def test_analysis_hook_ignores_info_findings():
     assert should_request_analysis_approval(snapshot, config) is False
 
 
-def test_hook_payload_requests_approval_and_forbids_actions():
+def test_hook_payload_requests_approval_and_passes_snapshot_context(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
     payload = render_openclaw_hook_payload(_snapshot(), "123456")
+    absolute_snapshot_path = str((tmp_path / "var/snapshots/example.json").resolve())
 
     assert payload["channel"] == "discord"
     assert payload["to"] == "channel:123456"
@@ -42,7 +44,11 @@ def test_hook_payload_requests_approval_and_forbids_actions():
     assert "must not make changes" in payload["message"]
     assert "untrusted diagnostic data" in payload["message"]
     assert "Memory usage is high" in payload["message"]
-    assert "./var/snapshots/example.json" in payload["message"]
+    assert "Request id: " in payload["message"]
+    assert "Snapshot timestamp: 2026-07-15T09:00:00+00:00" in payload["message"]
+    assert f"Absolute snapshot path on the monitored host: {absolute_snapshot_path}" in payload["message"]
+    assert "read the snapshot JSON from that exact path" in payload["message"]
+    assert "must not depend on Discord channel history" in payload["message"]
 
 
 def test_post_hook_uses_bearer_token(monkeypatch):

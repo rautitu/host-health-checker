@@ -136,7 +136,7 @@ The OpenClaw gateway needs hooks enabled, for example:
 }
 ```
 
-After the user approves analysis in Discord, OpenClaw may start an analysis-only subagent in the normal channel conversation. Corrective actions require a separate explicit user request after the analysis.
+The hook gives OpenClaw a deterministic request ID, the snapshot timestamp, and the snapshot's absolute path on the monitored host. After the user approves analysis in Discord, OpenClaw may start an analysis-only subagent in the normal channel conversation. The subagent is instructed to read that snapshot JSON directly instead of relying on relayed Discord channel history. Corrective actions require a separate explicit user request after the analysis.
 
 ## Cron
 
