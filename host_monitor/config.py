@@ -31,6 +31,15 @@ class DockerConfig:
 
 
 @dataclass(frozen=True)
+class SensorsConfig:
+    enabled: bool = True
+    cpu_temperature_warn_c: float = 85.0
+    cpu_temperature_critical_c: float = 95.0
+    gpu_temperature_warn_c: float = 85.0
+    gpu_temperature_critical_c: float = 95.0
+
+
+@dataclass(frozen=True)
 class AlertingConfig:
     discord_webhook_url_env: str = "HOST_MONITOR_DISCORD_WEBHOOK"
     include_snapshot_path: bool = True
@@ -66,6 +75,7 @@ class StorageConfig:
 class Config:
     host: HostConfig = field(default_factory=HostConfig)
     docker: DockerConfig = field(default_factory=DockerConfig)
+    sensors: SensorsConfig = field(default_factory=SensorsConfig)
     alerting: AlertingConfig = field(default_factory=AlertingConfig)
     storage: StorageConfig = field(default_factory=StorageConfig)
 
@@ -80,6 +90,7 @@ def load_config(path: Path | None) -> Config:
     return Config(
         host=_dataclass_from_dict(HostConfig, raw.get("host", {})),
         docker=_dataclass_from_dict(DockerConfig, raw.get("docker", {})),
+        sensors=_dataclass_from_dict(SensorsConfig, raw.get("sensors", {})),
         alerting=_dataclass_from_dict(AlertingConfig, raw.get("alerting", {})),
         storage=_storage_from_dict(raw.get("storage", {})),
     )

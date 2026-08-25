@@ -17,6 +17,13 @@ container_mem_percent_warn = 80
 restart_count_increase_warn = 1
 require_healthy = true
 
+[sensors]
+enabled = true
+cpu_temperature_warn_c = 85
+cpu_temperature_critical_c = 95
+gpu_temperature_warn_c = 85
+gpu_temperature_critical_c = 95
+
 [alerting]
 discord_webhook_url_env = "HOST_MONITOR_DISCORD_WEBHOOK"
 include_snapshot_path = true

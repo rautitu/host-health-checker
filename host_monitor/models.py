@@ -22,6 +22,7 @@ class Snapshot:
     disks: list[dict[str, Any]]
     processes: dict[str, list[dict[str, Any]]]
     docker: dict[str, Any]
+    sensors: dict[str, Any] = field(default_factory=dict)
     findings: list[Finding] = field(default_factory=list)
     snapshot_path: str | None = None
 
@@ -37,9 +38,9 @@ class Snapshot:
             "disks": self.disks,
             "processes": self.processes,
             "docker": self.docker,
+            "sensors": self.sensors,
             "findings": [finding.__dict__ for finding in self.findings],
         }
         if self.snapshot_path:
             data["snapshot_path"] = self.snapshot_path
         return data
-
