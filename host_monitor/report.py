@@ -16,6 +16,9 @@ def render_discord_report(snapshot: Snapshot, config: Config) -> str:
         f"CPU avg/max core: `{snapshot.cpu['average_percent']}% / {snapshot.cpu['max_core_percent']}%`",
         f"Memory: `{snapshot.memory['used_percent']}%` | Swap: `{snapshot.swap['used_percent']}%`",
     ]
+    sensor_line = _render_sensor_line(snapshot.sensors)
+    if sensor_line:
+        lines.append(sensor_line)
     if snapshot.load_average:
         per_cpu = snapshot.load_average[0] / max(int(snapshot.cpu["core_count"]), 1)
         lines.append(f"Load 1/5/15: `{snapshot.load_average[0]:.2f} {snapshot.load_average[1]:.2f} {snapshot.load_average[2]:.2f}` | per CPU: `{per_cpu:.2f}`")
@@ -79,6 +82,38 @@ def _render_process_rows(rows: list[dict[str, object]]) -> list[str]:
             f"`{row.get('username') or 'unknown'}` {row.get('name') or 'unknown'} - {command}"
         )
     return rendered
+
+
+def _render_sensor_line(sensors: dict[str, object]) -> str | None:
+    if not sensors.get("enabled"):
+        return None
+
+    temperatures: list[str] = []
+    fans: list[str] = []
+    cpu = sensors.get("cpu")
+    if isinstance(cpu, dict):
+        if isinstance(cpu.get("temperature_c"), (int, float)):
+            temperatures.append(f"CPU {cpu['temperature_c']}°C")
+        if isinstance(cpu.get("fan_rpm"), (int, float)):
+            fans.append(f"CPU {cpu['fan_rpm']} RPM")
+
+    gpus = sensors.get("gpus")
+    if isinstance(gpus, list):
+        for gpu in gpus:
+            if not isinstance(gpu, dict):
+                continue
+            label = f"GPU {gpu.get('index', '?')}"
+            if isinstance(gpu.get("temperature_c"), (int, float)):
+                temperatures.append(f"{label} {gpu['temperature_c']}°C")
+            if isinstance(gpu.get("fan_percent"), (int, float)):
+                fans.append(f"{label} {gpu['fan_percent']}%")
+
+    parts = []
+    if temperatures:
+        parts.append("Temps: " + " | ".join(temperatures))
+    if fans:
+        parts.append("Fans: " + " | ".join(fans))
+    return " | ".join(parts) if parts else None
 
 
 def _duration(seconds: float) -> str:

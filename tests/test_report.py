@@ -82,3 +82,28 @@ def test_post_discord_report_sets_user_agent(monkeypatch):
 
     assert captured["timeout"] == 20
     assert captured["request"].headers["User-agent"] == "host-health-checker/0.1"
+
+
+def test_report_renders_temperatures_and_fans():
+    snapshot = Snapshot(
+        generated_at="2026-06-02T15:00:00+00:00",
+        hostname="example-host",
+        uptime_seconds=3661,
+        load_average=None,
+        cpu={"average_percent": 10.0, "max_core_percent": 20.0, "core_count": 2},
+        memory={"used_percent": 50.0},
+        swap={"used_percent": 0.0},
+        disks=[],
+        processes={"top_cpu": [], "top_memory": []},
+        docker={"available": False, "reason": "docker CLI not found"},
+        sensors={
+            "enabled": True,
+            "cpu": {"temperature_c": 61.0, "fan_rpm": 1700},
+            "gpus": [{"index": 0, "temperature_c": 55, "fan_percent": 32}],
+        },
+    )
+
+    report = render_discord_report(snapshot, Config())
+
+    assert "Temps: CPU 61.0°C | GPU 0 55°C" in report
+    assert "Fans: CPU 1700 RPM | GPU 0 32%" in report

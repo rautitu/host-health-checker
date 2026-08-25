@@ -13,6 +13,8 @@ The first version is intentionally report-only: it does not kill, restart, or re
 - top CPU and memory processes
 - disk and inode usage for configured mount points
 - Docker container stats, health, status, and restart count changes when Docker is available
+- CPU temperature and CPU fan RPM when exposed through Linux hardware monitoring
+- NVIDIA GPU temperature and fan speed percentage when `nvidia-smi` is available
 
 ## Install For Local Development
 

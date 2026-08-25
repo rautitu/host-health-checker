@@ -7,6 +7,7 @@ from pathlib import Path
 from host_monitor.checks.docker import collect_docker
 from host_monitor.checks.host import collect_disks, collect_host
 from host_monitor.checks.processes import collect_processes
+from host_monitor.checks.sensors import collect_sensors
 from host_monitor.config import Config
 from host_monitor.models import Snapshot
 from host_monitor.state import load_state, save_state
@@ -17,6 +18,7 @@ def build_snapshot(config: Config) -> Snapshot:
     host_data, host_findings = collect_host(config.host)
     disks, disk_findings = collect_disks(config.host)
     docker, docker_findings, state_update = collect_docker(config.docker, state)
+    sensors, sensor_findings = collect_sensors(config.sensors)
     processes = collect_processes(config.host.process_limit)
 
     snapshot = Snapshot(
@@ -30,7 +32,8 @@ def build_snapshot(config: Config) -> Snapshot:
         disks=disks,
         processes=processes,
         docker=docker,
-        findings=host_findings + disk_findings + docker_findings,
+        sensors=sensors,
+        findings=host_findings + disk_findings + docker_findings + sensor_findings,
     )
 
     state.update(state_update)
