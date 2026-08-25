@@ -5,8 +5,8 @@ import json
 import sys
 from pathlib import Path
 
-from host_monitor.approval import post_subagent_prompt, should_prompt_for_subagent
 from host_monitor.config import load_config
+from host_monitor.openclaw_hook import post_openclaw_analysis_hook, should_request_analysis_approval
 from host_monitor.report import post_discord_report, render_discord_report
 from host_monitor.snapshot import build_snapshot, save_snapshot
 
@@ -41,13 +41,13 @@ def main(argv: list[str] | None = None) -> int:
     webhook_url = config.alerting.discord_webhook_url
     if webhook_url:
         post_discord_report(report, webhook_url)
-        if should_prompt_for_subagent(snapshot, config):
-            try:
-                post_subagent_prompt(snapshot, config, webhook_url)
-            except Exception as exc:
-                print(f"Warning: could not post subagent approval prompt: {exc}", file=sys.stderr)
     else:
         print(report)
+    if should_request_analysis_approval(snapshot, config):
+        try:
+            post_openclaw_analysis_hook(snapshot, config)
+        except Exception as exc:
+            print(f"Warning: could not call OpenClaw analysis hook: {exc}", file=sys.stderr)
     return 0
 
 
@@ -61,11 +61,13 @@ def config_test(config) -> dict[str, object]:
         "docker_cli_found": shutil.which("docker") is not None,
         "discord_webhook_env": config.alerting.discord_webhook_url_env,
         "discord_webhook_configured": bool(config.alerting.discord_webhook_url),
-        "subagent_prompt_enabled": config.alerting.subagent_prompt_enabled,
-        "subagent_prompt_timeout_hours": config.alerting.subagent_prompt_timeout_hours,
-        "subagent_prompt_default_model": config.alerting.subagent_prompt_default_model,
-        "subagent_prompt_models": config.alerting.subagent_prompt_models,
-        "subagent_prompt_interactive_components": config.alerting.subagent_prompt_interactive_components,
+        "openclaw_analysis_hook_enabled": config.alerting.openclaw_analysis_hook_enabled,
+        "openclaw_hook_url_env": config.alerting.openclaw_hook_url_env,
+        "openclaw_hook_url_configured": bool(config.alerting.openclaw_hook_url),
+        "openclaw_hook_token_env": config.alerting.openclaw_hook_token_env,
+        "openclaw_hook_token_configured": bool(config.alerting.openclaw_hook_token),
+        "openclaw_discord_channel_env": config.alerting.openclaw_discord_channel_env,
+        "openclaw_discord_channel_configured": bool(config.alerting.openclaw_discord_channel),
         "disk_mounts": config.host.disk_mounts,
     }
 

@@ -123,6 +123,9 @@ fi
 if [[ ! -f "${ENV_FILE}" ]]; then
   cat > "${ENV_FILE}" <<EOF
 HOST_MONITOR_DISCORD_WEBHOOK=${DISCORD_WEBHOOK_URL}
+HOST_MONITOR_OPENCLAW_HOOK_URL=
+HOST_MONITOR_OPENCLAW_HOOK_TOKEN=
+HOST_MONITOR_OPENCLAW_DISCORD_CHANNEL=
 EOF
   chmod 600 "${ENV_FILE}"
   echo "Created ${ENV_FILE}"
@@ -174,4 +177,3 @@ Next:
   2. Put the Discord webhook in ${ENV_FILE} if it is still empty.
   3. Test with: ${RUNNER}
 EOF
-

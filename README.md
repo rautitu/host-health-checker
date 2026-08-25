@@ -74,6 +74,9 @@ deploy/install.sh --help
 
 ```bash
 HOST_MONITOR_DISCORD_WEBHOOK=https://discord.com/api/webhooks/...
+HOST_MONITOR_OPENCLAW_HOOK_URL=
+HOST_MONITOR_OPENCLAW_HOOK_TOKEN=
+HOST_MONITOR_OPENCLAW_DISCORD_CHANNEL=
 ```
 
 If `--discord-webhook-url` is omitted on first install, the file is still created with an empty value. Add the URL later with `sudoedit /etc/host-monitor/env`, or rerun the installer with `--discord-webhook-url`.
@@ -95,34 +98,45 @@ export HOST_MONITOR_DISCORD_WEBHOOK='https://discord.com/api/webhooks/...'
 python -m host_monitor daily --config /etc/host-monitor/config.toml
 ```
 
-### Optional Subagent Approval Prompt
+### Optional OpenClaw Analysis Approval
 
-The monitor can post a second Discord message when findings cross configured alert levels. The message contains Discord components for:
+When a health check contains warnings, the monitor can call an OpenClaw agent hook. OpenClaw then asks in the configured Discord channel whether it should start a subagent to analyze why the warnings occurred. The hook prompt explicitly limits the workflow to analysis: it does not authorize changes, restarts, file edits, or other remediation.
 
-- model selection, defaulting to `default`
-- `Kyllä` approval
-- `Ei` decline
-- a request id and 6 hour expiry metadata
+This feature assumes that OpenClaw is running on the monitored host and that its HTTP agent hook is enabled and reachable. If OpenClaw is not running on the host, `openclaw_analysis_hook_enabled` must always remain `false`.
 
 Enable it in config:
 
 ```toml
 [alerting]
-subagent_prompt_enabled = true
-subagent_prompt_timeout_hours = 6
-subagent_prompt_default_model = "default"
-subagent_prompt_models = ["default", "openai/gpt-5.5"]
-subagent_prompt_min_level = "warning"
-subagent_prompt_interactive_components = false
+openclaw_analysis_hook_enabled = true
+openclaw_hook_url_env = "HOST_MONITOR_OPENCLAW_HOOK_URL"
+openclaw_hook_token_env = "HOST_MONITOR_OPENCLAW_HOOK_TOKEN"
+openclaw_discord_channel_env = "HOST_MONITOR_OPENCLAW_DISCORD_CHANNEL"
 ```
 
-By default this posts a plain text prompt without buttons. Important: a normal incoming Discord webhook cannot send interactive buttons or selects. To actually start an OpenClaw subagent from `Kyllä`, wire a Discord app interaction endpoint or an OpenClaw receiver, use an application-owned webhook, and then set `subagent_prompt_interactive_components = true`. The custom ids are:
+Set the hook details in the environment file, not in TOML:
 
-- `host-monitor:subagent:model:<request-id>`
-- `host-monitor:subagent:approve:<request-id>`
-- `host-monitor:subagent:decline:<request-id>`
+```bash
+HOST_MONITOR_OPENCLAW_HOOK_URL=http://127.0.0.1:18789/hooks/agent
+HOST_MONITOR_OPENCLAW_HOOK_TOKEN=use-a-dedicated-hooks-token
+HOST_MONITOR_OPENCLAW_DISCORD_CHANNEL=channel:1511397541667672239
+```
 
-The receiver should reject approvals after `subagent_prompt_timeout_hours` and invoke OpenClaw with the selected model and the saved snapshot path.
+The token is OpenClaw's dedicated `hooks.token`; do not reuse the Gateway authentication token. The channel may be given as either its numeric Discord ID or `channel:<id>`. It is normally the same channel targeted by the Discord webhook, but Discord webhook URLs do not expose the channel ID, so it must be configured separately.
+
+The OpenClaw gateway needs hooks enabled, for example:
+
+```json5
+{
+  hooks: {
+    enabled: true,
+    token: "use-a-dedicated-hooks-token",
+    path: "/hooks"
+  }
+}
+```
+
+The hook gives OpenClaw a deterministic request ID, the snapshot timestamp, and the snapshot's absolute path on the monitored host. After the user approves analysis in Discord, OpenClaw may start an analysis-only subagent in the normal channel conversation. The subagent is instructed to read that snapshot JSON directly instead of relying on relayed Discord channel history. Corrective actions require a separate explicit user request after the analysis.
 
 ## Cron
 
